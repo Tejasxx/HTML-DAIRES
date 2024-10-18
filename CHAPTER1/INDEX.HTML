@@ -1,0 +1,200 @@
+
+
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" /><meta name="apple-mobile-web-app-capable" content="yes" /><title>
+	SIMATS Web App
+</title><link href="../Content/jmobile/css/jquery.mobile-1.4.5.min.css" rel="stylesheet" />
+    <script src="../Content/jmobile/js/jquery-1.10.2.min.js"></script>
+    <script src="../Content/jmobile/js/jquery.mobile-1.4.5.min.js"></script>
+    <style>
+        #footerTabs {
+            background: #FFF -webkit-radial-gradient(circle, #FFF, #dee2e4);
+        }
+
+        .ui-listview sup {
+            font-size: 0.6em;
+            color: #cc0000;
+        }
+        
+    </style>
+    
+</head>
+<body>
+    <form method="post" action="./OrderStatus.aspx" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="wJBwJ8Sx/lOLstIqyTwHWngR/G4p3vC+K0ps1NlpinU22IrYFQAdTk3/ftYc3e4VsCjGevo/H16uqvDVbbwAUZdAcl0IBJY9wcVEFg1WmF8=" />
+</div>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="C5AA505B" />
+</div>
+        <!-- /page content -->
+        <div>
+            
+    <!-- /header -->
+    <div data-role="header" data-position="fixed">
+        <h1 id="hpageheader">Order Status</h1>
+        <a href="Index.aspx" rel="external" data-icon="carat-l" data-iconpos="notext">Back</a>
+        <a href="#" onclick="window.location.reload()" data-icon="back" data-iconpos="notext">Refresh</a>
+    </div>
+    <!-- /header -->
+    <!-- /content -->
+    <div>
+        <div data-role="content">
+
+            <div class="" style="margin-bottom: 60px;">
+                <ul data-role="listview" data-inset="false" id="ollistview">
+                </ul>
+            </div>
+
+            <input type="hidden" name="ctl00$ContentPlaceHolder1$hdnstudentid" id="ContentPlaceHolder1_hdnstudentid" value="14474" />
+            <br />
+            
+        </div>
+
+        <div data-role="popup" id="popupadd" data-theme="a" style="width: 350px;">
+            <div data-role="header" data-theme="a" class="ui-corner-top">
+                <h1>Status Details</h1>
+            </div>
+            <div role="main" class="ui-corner-bottom ui-content" style="text-align: center;">
+                <h2 id="horderno"></h2>
+                <h2 id="hhotelname"></h2>
+                <p id="horderon">Order On: </p>
+                <p id="htotal">Total Price: </p>
+                <p id="hstatus">Status: </p>
+                <p id="heta">ETA: </p>
+                <h5 style="border-bottom:solid 1px #808080"></h5>
+                <table data-role="table" id="table-column-toggle" data-mode="columntoggle" data-column-btn-text="">
+                    <thead>
+                        <tr>
+                            <th>Sno</th>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbltritem">
+                    </tbody>
+                </table>
+                <button type="button" id="btnClose" data-theme="b" class="ui-btn-hidden" aria-disabled="false" onclick="closepopup();">Close</button>
+            </div>
+        </div>
+
+    </div>
+    <!-- /content -->
+
+    <script>
+
+        $(document).ready(function () {
+
+            $.ajax({
+                type: "GET",
+                url: "/api/HotelAdmin/GetHotelRequestDetails",
+                data: { Mode: "OrderStatus", MasterId: "", ActionId1: "", ActionId2: "", ActionId3: "", UserId: $("#ContentPlaceHolder1_hdnstudentid").val() },
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    if (data.Table.length > 0) {
+                        $.each(data.Table, function (key, value) {
+                            $('#ollistview').append('<li><a onclick="view(' + value.OrderId + ');"><h1>Order No: ' + value.OrderRef + '</h1><p><strong>Restaurant: ' + value.HotelName + '</strong></p><p><strong>Order On: ' + value.OrderedOn + '</strong></p><p>Total: ' + value.TotalPrice + '</p><p>Status: ' + value.OrderStatus + '</p><p>ETA: ' + value.ETA + ' min</p></a></li>');
+                        });
+                    }
+
+                    $("#ollistview").listview("refresh");
+                }
+            });
+
+        });
+
+        function view(id) {
+
+            $("#popupadd").popup("open");
+
+            $('#tbltritem').empty();
+
+            $.ajax({
+                type: "GET",
+                url: "/api/HotelAdmin/GetHotelRequestDetails",
+                data: { Mode: "OrderDetailsbyId", MasterId: id, ActionId1: "", ActionId2: "", ActionId3: "", UserId: $("#ContentPlaceHolder1_hdnstudentid").val() },
+                async: false,
+                dataType: "json",
+                success: function (data) {
+                    if (data.Table.length > 0) {
+                        var vitemids = '';
+                        var vqty = '';
+                        var vtotalprice = 0;
+                        var sno = 1;
+                        $.each(data.Table, function (key, value) {
+
+                            vtotalprice += (value.Qty * value.UnitPrice);
+
+                            $('#tbltritem').append('<tr><td>' + sno + '</td><td>' + value.ItemName + '</td><td>' + value.UnitPrice + '</td><td>' + value.Qty + '</td><td>' + (parseInt(value.Qty) * parseInt(value.UnitPrice)) + '</td></tr>');
+
+                            sno++;
+                            
+                            $('#horderno').text('' + value.OrderRef);
+                            $('#horderon').text('' + value.OrderedOn);
+                            $('#hstatus').text(''+value.OrderStatus);
+                            $('#heta').text('ETA: '+value.ETA+' min');
+                            $('#hhotelname').text('' + value.HotelName);
+                        });
+
+                        $('#htotal').text('Total: '+vtotalprice);
+
+                    }
+
+                    $("#ollistview").listview("refresh");
+                }
+            });
+
+        }
+
+        function closepopup() {
+            $("#popupadd").popup("close");
+        }
+    </script>
+    <style>
+        .ui-table-columntoggle-btn .ui-btn .ui-btn-a .ui-corner-all .ui-shadow .ui-mini{
+            display:none;
+        }
+    </style>
+
+        </div>
+        <!-- /footer -->
+        <br />
+        <div data-role="footer" data-position="fixed">
+            <div data-role="navbar" data-iconpos="top">
+                <ul>
+                    <li><a href="../Food/Index.aspx" rel="external" data-icon="home">Home</a></li>
+                    <li><a href="../Food/MyProfile.aspx" rel="external" data-icon="info">Profile</a></li>
+                   
+                    <li><a href="../Login.aspx" rel="external" data-icon="lock">Logoff</a></li>
+                </ul>
+            </div>
+        </div>
+        <!-- /footer -->
+        <div id="dvmodelsuccess" role="dialog" class="ui-dialog-contain ui-overlay-shadow ui-corner-all" style="display: none; position: absolute; top: 55%; left: 4%;">
+        </div>
+        <!-- /page content -->
+
+        <script type="text/javascript">
+
+            $(document).on("mobileinit", function () {
+                $.mobile.defaultPageTransition = "slide";
+            });
+
+            $(document).ready(function () {
+
+                $("#dvmodelsuccess").fadeTo(2000, 500).slideUp(500, function () {
+                    $("#dvmodelsuccess").slideUp(1000);
+                });
+            });
+        </script>
+    </form>
+</body>
+</html>
+
